@@ -1,8 +1,9 @@
 /* Songs Burger
  *
- * 스크롤 위치로 영상을 스크럽한다.
- * 스크럽이 불가능한 환경(모션 최소화 설정, 저사양, 영상 로드 실패)에서는
- * 조용히 자동 반복 재생으로 내려앉는다. 어느 쪽이든 글은 그대로 읽힌다.
+ * Scroll position drives the film: the page scrubs video.currentTime.
+ * Where scrubbing is unwelcome or impossible — reduced motion, data saver,
+ * a film that never arrives — it steps back to a quiet loop, or to the
+ * poster. The words stay readable in every one of those cases.
  */
 (() => {
   'use strict';
@@ -14,12 +15,12 @@
   const reel  = document.getElementById('reel');
   const beats = Array.from(document.querySelectorAll('.beat'));
 
-  // 재료 목록은 순서대로 들어오게 인덱스를 심어둔다
+  // Index each filling so the list arrives one line at a time.
   document.querySelectorAll('.stack').forEach((list) => {
     Array.from(list.children).forEach((li, i) => li.style.setProperty('--i', i));
   });
 
-  /* ── 텍스트 등장 ─────────────────────────────────── */
+  /* ── Entrances ───────────────────────────────────── */
 
   if ('IntersectionObserver' in window) {
     const io = new IntersectionObserver((entries) => {
@@ -32,7 +33,7 @@
     beats.forEach((b) => b.classList.add('is-on'));
   }
 
-  /* ── 영상 ────────────────────────────────────────── */
+  /* ── The film ────────────────────────────────────── */
 
   if (!film || !reel) return;
 
@@ -40,14 +41,21 @@
   const coarse    = window.matchMedia('(pointer: coarse)');
   const smallData = navigator.connection && navigator.connection.saveData;
 
-  // 모바일은 720p를 받을 이유가 없다
-  if (coarse.matches || window.innerWidth < 760) {
+  /* Pick a print that matches the screen. The film is the product, so a wide
+     display gets the 1080p master rather than a 720p file stretched to fit;
+     a phone has no use for either. */
+  (() => {
     const src = document.getElementById('reelSrc');
-    if (src && !reel.currentTime) {
-      src.src = '/media/hero-480.mp4';
+    if (!src) return;
+    const w    = window.innerWidth * (window.devicePixelRatio || 1);
+    const want = (coarse.matches || window.innerWidth < 760) ? '/media/hero-480.mp4'
+               : (w >= 1280 && !smallData)                   ? '/media/hero-1080.mp4'
+               : '/media/hero-720.mp4';
+    if (!src.src.endsWith(want)) {
+      src.src = want;
       reel.load();
     }
-  }
+  })();
 
   let mode = null;   // 'scrub' | 'loop'
   let raf  = 0;
@@ -58,7 +66,7 @@
     mode = 'loop';
     window.removeEventListener('scroll', onScroll);
     reel.loop = true;
-    reel.play().catch(() => { /* 자동재생이 막히면 포스터가 남는다 */ });
+    reel.play().catch(() => { /* blocked autoplay just leaves the poster */ });
   };
 
   const scrubMode = () => {
@@ -80,7 +88,8 @@
   function apply() {
     raf = 0;
     if (!duration) return;
-    // 마지막 프레임에 정확히 닿으면 일부 브라우저가 되감는다. 아주 살짝 못 미치게 둔다.
+    // Landing exactly on the final frame makes some browsers rewind.
+    // Stop a hair short of it.
     const t = progress() * (duration - 0.05);
     if (Math.abs(reel.currentTime - t) > 0.01) reel.currentTime = t;
   }
@@ -89,11 +98,12 @@
     if (!raf) raf = requestAnimationFrame(apply);
   }
 
-  /* 워드마크는 첫 화면에서만. 아래로 내려가면 큰 글자와 겹친다. */
+  /* The wordmark belongs to the first screen only — further down it
+     collides with the headlines. */
   const mark = document.querySelector('.mark');
   if (mark) {
     const markWatch = () => {
-      mark.dataset.gone = window.scrollY > window.innerHeight * 0.5 ? '1' : '0';
+      mark.dataset.gone = window.scrollY > window.innerHeight * 0.15 ? '1' : '0';
     };
     window.addEventListener('scroll', markWatch, { passive: true });
     markWatch();
@@ -110,7 +120,7 @@
     decide();
   });
 
-  // 영상이 끝내 안 오면 포스터만 남기고 조용히 물러난다
+  // If the film never arrives, stand down and leave the poster.
   reel.addEventListener('error', () => {
     window.removeEventListener('scroll', onScroll);
     mode = 'dead';

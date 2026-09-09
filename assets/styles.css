@@ -1,21 +1,29 @@
 /* Songs Burger
-   팔레트는 히어로 영상에서 직접 추출한 값입니다.
-   영상 속 검정은 푸른 검정이 아니라 따뜻한 검정이라, 배경도 그에 맞춥니다. */
+   The palette is sampled straight out of the hero film — the black in that
+   footage is a warm black, not a blue one, so the page is built on it.
+
+   The film is the product. Nothing here is allowed to dim it: there is no
+   full-frame overlay. Text earns its legibility from weight and a soft
+   shadow of its own, plus a small pool of shade that stays close to the
+   words and never reaches the food. */
 
 :root {
-  --char:    #100904;  /* 숯 — 배경 */
-  --char-up: #1B1009;  /* 숯, 한 단계 밝게 */
-  --crust:   #5C2E0F;  /* 크러스트 — 괘선 */
-  --ember:   #AC5620;  /* 잉걸 */
-  --flame:   #DDA33C;  /* 불꽃 — 딱 한 곳에만 */
-  --bun:     #D8BE84;  /* 번 — 본문 */
-  --smoke:   #907F6A;  /* 연기 — 보조 */
+  --char:    #100904;  /* charcoal — page ground */
+  --char-up: #1B1009;
+  --crust:   #5C2E0F;  /* rules, hairlines */
+  --ember:   #AC5620;
+  --flame:   #DDA33C;  /* used once, on purpose */
+  --bun:     #E7D3A2;  /* body text */
+  --smoke:   #9C8B76;
 
   --pad: clamp(1.5rem, 6vw, 7rem);
-  --measure: 34ch;
+  --measure: 30ch;
 
-  --sans: "Pretendard Variable", Pretendard, system-ui, sans-serif;
-  --latin: "Archivo", var(--sans);
+  --sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+
+  /* Legibility over moving film, without touching the film. */
+  --lift-lg: 0 1px 2px rgba(0,0,0,0.55), 0 4px 22px rgba(16,9,4,0.8), 0 0 60px rgba(16,9,4,0.55);
+  --lift-sm: 0 1px 2px rgba(0,0,0,0.6), 0 2px 12px rgba(16,9,4,0.85);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -32,8 +40,6 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  word-break: keep-all;
-  overflow-wrap: break-word;
 }
 
 :focus-visible {
@@ -50,7 +56,7 @@ body {
 }
 .skip:focus { transform: translateY(0); }
 
-/* ── 워드마크 ─────────────────────────────────────── */
+/* ── Wordmark ─────────────────────────────────────── */
 
 .mark {
   position: fixed;
@@ -62,16 +68,15 @@ body {
 }
 .mark[data-gone="1"] { opacity: 0; }
 .mark__word {
-  font-family: var(--latin);
   font-weight: 900;
   font-size: clamp(0.8rem, 1.5vw, 1rem);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  color: var(--bun);
-  text-shadow: 0 1px 12px rgba(16,9,4,0.9);
+  color: #fff;
+  text-shadow: var(--lift-sm);
 }
 
-/* ── 필름 구간 ────────────────────────────────────── */
+/* ── The film ─────────────────────────────────────── */
 
 .film { position: relative; }
 
@@ -90,15 +95,6 @@ body {
   display: block;
 }
 
-/* 텍스트가 앉는 왼쪽만 눌러준다. 전면 오버레이는 음식을 죽인다. */
-.film__veil {
-  position: absolute; inset: 0;
-  background:
-    linear-gradient(100deg, rgba(16,9,4,0.95) 0%, rgba(16,9,4,0.82) 26%, rgba(16,9,4,0.35) 48%, rgba(16,9,4,0) 68%),
-    linear-gradient(to top, rgba(16,9,4,0.75) 0%, rgba(16,9,4,0) 34%);
-  pointer-events: none;
-}
-
 .beats {
   position: relative;
   z-index: 1;
@@ -106,6 +102,7 @@ body {
 }
 
 .beat {
+  position: relative;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
@@ -114,48 +111,68 @@ body {
   max-width: calc(var(--measure) + var(--pad) * 2);
 }
 
+/* A pool of shade that sits under the words only. It fades out well before
+   the middle of the frame, so the burger is never behind glass. */
+.beat::before {
+  content: "";
+  position: absolute;
+  inset: 0 -14vw 0 -12vw;
+  background: radial-gradient(
+    58% 42% at 26% 50%,
+    rgba(16, 9, 4, 0.72) 0%,
+    rgba(16, 9, 4, 0.44) 45%,
+    rgba(16, 9, 4, 0) 78%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
 .beat--tail { min-height: 100svh; padding: 0; }
+.beat--tail::before { content: none; }
 
 .beat__line {
   margin: 0;
   font-weight: 800;
-  font-size: clamp(2.75rem, 8.5vw, 6.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.045em;
+  font-size: clamp(3rem, 9vw, 7rem);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
   text-wrap: balance;
-  text-shadow: 0 2px 24px rgba(16,9,4,0.75);
+  color: #fff;
+  text-shadow: var(--lift-lg);
 }
 
 .beat__note {
   margin: 1.4rem 0 0;
-  max-width: 26ch;
-  color: #B7A68F;
-  font-size: clamp(0.95rem, 2.2vw, 1.15rem);
-  text-shadow: 0 1px 10px rgba(16,9,4,0.85);
+  max-width: 30ch;
+  color: var(--bun);
+  font-size: clamp(1rem, 2.2vw, 1.2rem);
+  font-weight: 500;
+  text-shadow: var(--lift-sm);
 }
 
 .beat__lead {
   margin: 0 0 1.6rem;
   font-weight: 800;
-  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-size: clamp(1.75rem, 4.5vw, 2.75rem);
   letter-spacing: -0.03em;
-  text-shadow: 0 2px 20px rgba(16,9,4,0.8);
+  color: #fff;
+  text-shadow: var(--lift-lg);
 }
 
-/* 재료는 영상 속에서 세로로 쌓여 있다.
-   그래서 목록도 세로로 잇는다 — 괘선은 장식이 아니라 그 구조다. */
+/* In the film the fillings hang in a vertical stack.
+   The rule down the left is that stack, not decoration. */
 .stack {
   margin: 0;
   padding: 0 0 0 1.4rem;
   list-style: none;
-  border-left: 1px solid var(--crust);
+  border-left: 1px solid rgba(216, 190, 132, 0.35);
 }
 .stack__item {
   position: relative;
-  padding: 0.42rem 0;
-  font-size: clamp(1rem, 2.6vw, 1.3rem);
-  color: #BCAB93;
-  text-shadow: 0 1px 10px rgba(16,9,4,0.85);
+  padding: 0.4rem 0;
+  font-size: clamp(1.05rem, 2.6vw, 1.35rem);
+  font-weight: 600;
+  color: var(--bun);
+  text-shadow: var(--lift-sm);
 }
 .stack__item::before {
   content: "";
@@ -164,15 +181,15 @@ body {
   top: 50%;
   width: 0.7rem;
   height: 1px;
-  background: var(--crust);
+  background: rgba(216, 190, 132, 0.45);
 }
 .stack__item--hero {
   color: var(--flame);
-  font-weight: 700;
+  font-weight: 800;
 }
 .stack__item--hero::before { background: var(--flame); width: 1rem; }
 
-/* ── 정보 ─────────────────────────────────────────── */
+/* ── Shop details ─────────────────────────────────── */
 
 .info {
   position: relative;
@@ -189,7 +206,6 @@ body {
 
 .info__mark {
   margin: 0 0 clamp(2.5rem, 7vh, 4.5rem);
-  font-family: var(--latin);
   font-weight: 900;
   font-size: clamp(2rem, 7vw, 4.5rem);
   letter-spacing: 0.02em;
@@ -240,8 +256,9 @@ body {
   font-size: 0.9rem;
 }
 
-/* ── 등장 ─────────────────────────────────────────── */
-/* JS가 붙기 전에는 전부 보인다. 스크립트가 죽어도 글은 읽힌다. */
+/* ── Entrances ────────────────────────────────────── */
+/* Everything is visible before JS attaches. If the script dies, you can
+   still read the page. */
 
 .js .beat > *,
 .js .stack__item {
@@ -266,12 +283,23 @@ body {
   }
 }
 
-/* ── 좁은 화면 ────────────────────────────────────── */
+/* ── Narrow screens ───────────────────────────────── */
 
 @media (max-width: 640px) {
-  .film__veil {
-    background:
-      linear-gradient(to top, rgba(16,9,4,0.92) 0%, rgba(16,9,4,0.55) 42%, rgba(16,9,4,0.15) 75%);
+  .beat {
+    justify-content: flex-end;
+    padding-bottom: 14svh;
   }
-  .beat { justify-content: flex-end; padding-bottom: 16svh; }
+  /* Phones sit the text at the bottom, so the shade goes there too. */
+  .beat::before {
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(16, 9, 4, 0.82) 0%,
+      rgba(16, 9, 4, 0.5) 26%,
+      rgba(16, 9, 4, 0.12) 52%,
+      rgba(16, 9, 4, 0) 70%
+    );
+  }
+  .beat--list { justify-content: center; padding-bottom: 12svh; }
 }
